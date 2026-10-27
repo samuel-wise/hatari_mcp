@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.uv/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# MCP runtime artifacts
+*.sock
+*.socket
+*.fifo
+*.log
+hatari-*.cfg
+tmp/
+out/
+
+# Local fixtures (see project/fixtures/README.md)
+project/fixtures/*
+!project/fixtures/.gitignore
+!project/fixtures/README.md

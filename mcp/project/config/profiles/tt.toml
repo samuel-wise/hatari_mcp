@@ -1,0 +1,17 @@
+name = "tt"
+description = "Atari TT030, 4 MiB ST RAM + 4 MiB TT RAM, headless"
+
+[launch]
+args = [
+  "--machine", "tt",
+  "--memsize", "4",
+  "--ttram", "4",
+  "--sound", "off",
+  "--confirm-quit", "off",
+  "--fast-boot", "on",
+]
+env = { SDL_VIDEODRIVER = "dummy" }
+display = false
+
+[paths]
+tos = "~/atari/tos306.img"

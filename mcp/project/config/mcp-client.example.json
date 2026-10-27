@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "hatari": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/path/to/hatari_mcp/mcp/project",
+        "run",
+        "hatari-mcp"
+      ],
+      "env": {
+        "HATARI_BIN": "/path/to/hatari_mcp/build/src/hatari",
+        "HATARI_MCP_PROFILE": "st",
+        "HATARI_MCP_FIXTURES": "/path/to/hatari_mcp/mcp/project/fixtures"
+      }
+    }
+  }
+}

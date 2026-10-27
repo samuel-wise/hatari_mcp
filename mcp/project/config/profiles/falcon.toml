@@ -1,0 +1,17 @@
+name = "falcon"
+description = "Atari Falcon030, 4 MiB RAM, emulated DSP, headless"
+
+[launch]
+args = [
+  "--machine", "falcon",
+  "--memsize", "4",
+  "--dsp", "emu",
+  "--sound", "off",
+  "--confirm-quit", "off",
+  "--fast-boot", "on",
+]
+env = { SDL_VIDEODRIVER = "dummy" }
+display = false
+
+[paths]
+tos = "~/atari/tos404.img"

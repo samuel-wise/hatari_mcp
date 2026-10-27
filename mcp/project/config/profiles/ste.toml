@@ -1,0 +1,17 @@
+name = "ste"
+description = "Atari 1040STE, 2 MiB RAM, blitter, headless"
+
+[launch]
+args = [
+  "--machine", "ste",
+  "--memsize", "2",
+  "--blitter", "on",
+  "--sound", "off",
+  "--confirm-quit", "off",
+  "--fast-boot", "on",
+]
+env = { SDL_VIDEODRIVER = "dummy" }
+display = false
+
+[paths]
+tos = "~/atari/tos206.img"

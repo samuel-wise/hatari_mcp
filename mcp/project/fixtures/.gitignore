@@ -1,0 +1,4 @@
+# Whitelist: only documentation is tracked. Everything else is local test data.
+*
+!.gitignore
+!README.md

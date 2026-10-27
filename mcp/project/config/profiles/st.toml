@@ -1,0 +1,16 @@
+name = "st"
+description = "Atari 520ST, 1 MiB RAM, headless, TOS supplied by the user"
+
+[launch]
+args = [
+  "--machine", "st",
+  "--memsize", "1",
+  "--sound", "off",
+  "--confirm-quit", "off",
+  "--fast-boot", "on",
+]
+env = { SDL_VIDEODRIVER = "dummy" }
+display = false
+
+[paths]
+tos = "~/atari/tos104.img"
