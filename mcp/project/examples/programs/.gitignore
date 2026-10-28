@@ -1,0 +1,21 @@
+# Runtime state and scratch data for the example programs.
+state/
+cache/
+__pycache__/
+*.py[cod]
+
+# Captured/generated artifacts (source is intentionally not ignored).
+*.png
+*.bmp
+*.jpg
+*.jpeg
+*.gif
+*.snap
+*.wav
+*.ym
+*.avi
+state/**/*.json
+
+# Editor/os noise.
+.DS_Store
+*.swp

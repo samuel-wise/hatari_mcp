@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "id": "godlib-sample-smoke",
+  "name": "GodLib input sample smoke",
+  "description": "Stages the prebuilt input sample and its resources; the GodLib tree stays read-only.",
+  "requires": {
+    "env": [
+      "GODLIB_ROOT",
+      "HATARI_TOS"
+    ],
+    "dirs": [
+      "${GODLIB_ROOT}/godlib.spl/input"
+    ],
+    "files": [
+      "${GODLIB_ROOT}/godlib.spl/input/INPUT.PRG"
+    ],
+    "rom": "emutos",
+    "skip_reason": "GodLib input sample or HATARI_TOS is not available"
+  },
+  "determinism": "tolerant",
+  "timeouts": {
+    "scenario_ms": 45000,
+    "step_ms": 30000
+  },
+  "config": {
+    "profile": "st",
+    "tos": "${HATARI_TOS}",
+    "autostart": "input/INPUT.PRG",
+    "gemdos_case": "upper"
+  },
+  "stage": [
+    {
+      "from": "${GODLIB_ROOT}/godlib.spl/input",
+      "to": "input"
+    }
+  ],
+  "steps": [
+    {
+      "id": "start",
+      "tool": "emu_start",
+      "args": {},
+      "timeout_ms": 30000
+    },
+    {
+      "id": "settle",
+      "tool": "emu_wait_for_exit",
+      "args": {
+        "timeout_ms": 2000
+      },
+      "timeout_ms": 6000
+    },
+    {
+      "id": "capture",
+      "tool": "screen_frame_capture",
+      "args": {},
+      "timeout_ms": 15000,
+      "capture": {
+        "name": "godlib-input",
+        "kind": "screenshot",
+        "format": "bmp",
+        "hash": "rgba"
+      }
+    },
+    {
+      "id": "stop",
+      "tool": "emu_stop",
+      "args": {},
+      "timeout_ms": 15000
+    }
+  ]
+}

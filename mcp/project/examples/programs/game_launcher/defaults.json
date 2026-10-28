@@ -1,0 +1,16 @@
+{
+  "hatari_bin": "$HOME/Projects/Hatari/hatari_mcp/build-install/bin/hatari",
+  "tos_dirs": [
+    "$HOME/Projects/Hatari/tos"
+  ],
+  "game_dirs": [
+    "$HOME/Projects/Hatari/atari_st/archive.org/download/Atari_ST_TOSEC_2012_04_23/Games"
+  ],
+  "catalog_dirs": [
+    "$HOME/Projects/Hatari/atari_st/KairoST/catalog"
+  ],
+  "boot_turbo": true,
+  "online_enrichment": true,
+  "enrichment_url": "",
+  "art_url_template": "https://thumbnails.libretro.com/Atari%20-%20ST/Named_Boxarts/{stem}.png"
+}

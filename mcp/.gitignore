@@ -25,3 +25,6 @@ out/
 project/fixtures/*
 !project/fixtures/.gitignore
 !project/fixtures/README.md
+
+# External tool checkouts (fetch/pin via scripts/, never commit)
+project/tools/ahcc/

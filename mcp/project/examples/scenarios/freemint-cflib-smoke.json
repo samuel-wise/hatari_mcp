@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "id": "freemint-cflib-smoke",
+  "name": "FreeMiNT cflib smoke (prebuilt binary required)",
+  "description": "P6 does not build FreeMiNT. This scenario consumes a prebuilt binary and skips with the exact missing path.",
+  "requires": {
+    "env": [
+      "FREEMINT_ROOT",
+      "HATARI_TOS"
+    ],
+    "dirs": [
+      "${FREEMINT_ROOT}/cflib"
+    ],
+    "files": [
+      "${FREEMINT_ROOT}/cflib/tests/cflib-smoke.prg"
+    ],
+    "rom": "emutos",
+    "skip_reason": "prebuilt cflib smoke binary is absent; build it with the P3.12 harness"
+  },
+  "determinism": "tolerant",
+  "timeouts": {
+    "scenario_ms": 45000,
+    "step_ms": 30000
+  },
+  "config": {
+    "profile": "st",
+    "tos": "${HATARI_TOS}",
+    "autostart": "cflib-smoke.prg",
+    "gemdos_case": "upper"
+  },
+  "stage": [
+    {
+      "from": "${FREEMINT_ROOT}/cflib/tests/cflib-smoke.prg",
+      "to": "cflib-smoke.prg",
+      "optional": true
+    }
+  ],
+  "steps": [
+    {
+      "id": "start",
+      "tool": "emu_start",
+      "args": {},
+      "timeout_ms": 30000
+    },
+    {
+      "id": "wait-exit",
+      "tool": "emu_wait_for_exit",
+      "args": {
+        "timeout_ms": 10000
+      },
+      "timeout_ms": 12000
+    },
+    {
+      "id": "capture",
+      "tool": "screen_frame_capture",
+      "args": {},
+      "timeout_ms": 15000,
+      "capture": {
+        "name": "cflib-smoke",
+        "kind": "screenshot",
+        "format": "bmp",
+        "hash": "rgba"
+      }
+    },
+    {
+      "id": "stop",
+      "tool": "emu_stop",
+      "args": {},
+      "timeout_ms": 15000
+    }
+  ]
+}

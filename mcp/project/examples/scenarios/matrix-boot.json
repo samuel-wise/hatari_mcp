@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "id": "matrix-boot",
+  "name": "Two-machine matrix smoke",
+  "description": "Deterministic case ids: matrix-boot__machine=st and matrix-boot__machine=ste.",
+  "requires": {
+    "env": ["HATARI_TOS"],
+    "rom": "emutos",
+    "skip_reason": "HATARI_TOS is not set to an EmuTOS image"
+  },
+  "determinism": "tolerant",
+  "timeouts": {
+    "scenario_ms": 60000,
+    "step_ms": 30000
+  },
+  "matrix": {
+    "machine": ["st", "ste"],
+    "max_cases": 4,
+    "fail_fast": true
+  },
+  "config": {
+    "profile": "${machine}",
+    "tos": "${HATARI_TOS}"
+  },
+  "steps": [
+    {"id": "start", "tool": "emu_start", "args": {}, "timeout_ms": 30000},
+    {"id": "settle", "tool": "emu_wait_for_exit", "args": {"timeout_ms": 800}, "timeout_ms": 4000},
+    {
+      "id": "capture",
+      "tool": "screen_frame_capture",
+      "args": {},
+      "timeout_ms": 15000,
+      "capture": {"name": "desktop", "kind": "screenshot", "format": "bmp", "hash": "rgba"}
+    },
+    {"id": "stop", "tool": "emu_stop", "args": {}, "timeout_ms": 15000}
+  ]
+}

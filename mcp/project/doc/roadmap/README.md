@@ -1,20 +1,38 @@
 # Hatari MCP roadmap
 
-Status: draft, living document.
-Last updated: 2026-10-26.
+Status: living document; implementation snapshot added 2026-10-27.
+Last updated: 2026-10-27.
 Companion docs: `../architecture.md`, `../tools-reference.md`,
-`../adr/0001-language-and-transport.md`.
+`../adr/0001-language-and-transport.md`, `../plans/README.md`.
 
-This roadmap starts from a deliberately small MVP — enough to run the
+This roadmap started from a deliberately small MVP — enough to run the
 "compile on the host, run headless, debug, screenshot" loop — and builds up to
 device coverage, deterministic graphical testing, CI automation, and eventually
-an upstream protocol.
+an upstream protocol. The server now registers **102 tools** across lifecycle,
+logs, debugger, memory/state, screen/frame, input/scripting, media/devices,
+build/AHCC, protocol reporting and scenario automation.
 
 Ordering rule: **every phase must be usable on its own**, and must not require a
 later phase to be useful. Items marked `[P]` need an upstream Hatari patch
 (see `../../patches/`); `[R]` is research/spike work with an unknown outcome.
 
 Size tags: `S` < 1 day, `M` 1–3 days, `L` 1–2 weeks, `XL` multi-week/research.
+
+### Implementation snapshot (2026-10-27)
+
+* P0–P6 are substantially implemented: supervisor, dual socket/stdin channel,
+  stderr demuxer, screenshots/frame analysis, input scripting, floppy/media
+  handling, AHCC CLI/GUI, `run_prg`, scenario validate/run/replay, corpus
+  discovery, artifact bundles and JUnit reports. Watchpoints remain
+  unsupported, and frame-locked input/determinism is still absent.
+* P7 protocol scaffolding exists in `src/hatari_mcp/protocol/`, but no
+  HELLO/HELLO_ACK handshake is wired to the supervisor. `emu_capabilities`
+  therefore reports legacy/banner-only and strict framed mode is unavailable.
+* P8 harnesses live in the non-shipping, `HATARI_MCP_LABS=1`-gated `labs/`
+  package. Their verdicts are mostly INCONCLUSIVE or narrow, not shipped
+  capabilities.
+* The checkboxes below are historical planning records for phases that are
+  complete; consult `../plans/` for per-phase work logs and remaining items.
 
 ---
 
@@ -32,8 +50,15 @@ manual emulator dance into a small, reliable loop:
 5. capture screenshots when the program draws;
 6. restart quickly for the next build.
 
-Today this works only through a mix of CLI flags, the control socket, and
-`hconsole.py`. The MVP should make it first-class.
+The MCP server now exposes this loop end to end: `emu_start` maps one host
+directory and autostarts, `run_prg` waits for NatFeats exit or timeout, and the
+debugger tools handle symbols, breakpoints, registers, memory and stepping.
+
+AHCC 6.0 is available locally in two forms: the command-line project manager
+`AHCCST_P.TTP` (wrapped by `scripts/ahcc-cli.py`) and the GEM GUI
+`AHCCST.PRG`. The MCP supports both: `ahcc_compile` runs the CLI path in an
+isolated headless instance, and `ahcc_gui_start`/`ahcc_gui_status` cover the GUI
+path (which needs a real display). Neither path requires modifying Hatari.
 
 ### W2 — Graphical regression testing
 
@@ -94,10 +119,32 @@ Known environment constraints:
   stdout, so a non-TTY-safe reader is required.
 * `--disable-video` skips rendering, so screenshots stop working. Headless
   operation uses `SDL_VIDEODRIVER=dummy` instead.
+* As of 2026-10-27 the framed protocol is not wired: even if a startup banner
+  advertises it, the server reports `banner-only` and uses the legacy adapter.
 * The control socket is Unix-only (`HAVE_UNIX_DOMAIN_SOCKETS`).
 * There is no guest exit code unless the program uses NatFeats or a known
   termination trap.
 * Hatari's symbol tables carry addresses, not source line numbers.
+
+### 2.1 Local toolchain and example corpus
+
+These host resources are inputs to development and testing, not files to copy
+into the repository. Tests must discover them by path and skip cleanly when a
+tree is absent.
+
+| Resource | Path | Use |
+| --- | --- | --- |
+| Hatari | `build-install/bin/hatari` | Default emulator binary; `hatari-prg-args` sits beside it. |
+| AHCC CLI | `mcp/project/tools/ahcc/ahcc-68000/AHCCST.BIN/AHCCST_P.TTP` | Project-manager compile/assemble/link path used by `ahcc-cli.py`. |
+| AHCC GUI | `.../AHCCST.BIN/AHCCST.PRG` | GEM IDE path for GUI automation and dialog reproduction. |
+| TOS/EmuTOS | `~/Projects/Hatari/tos/{emutos,tos1x,tos3x}` | EmuTOS for CI/demos; real TOS for accuracy. |
+| Okami-Shell | `~/Projects/Hatari/Okami-Shell` | GEM shell, resource files, TTP tools, screenshots. |
+| FreeMiNT | `~/Projects/Hatari/freemint/<subproject>` | Large C/C++ corpus: cflib, gemlib, libcmini, mintlib, xg, etc. |
+| GodLib | `~/Projects/Hatari/godlib/{godlib,godlib.spl}` | Game/demo library with input, screen, and asset code. |
+
+The corpus is read-only. Do not copy third-party source into `mcp/`; use it to
+drive integration and scenario tests. Preserve each project's license and build
+requirements in test notes.
 
 ---
 
@@ -107,8 +154,8 @@ Known environment constraints:
 
 | Device | Available today | Gaps | Plan |
 | --- | --- | --- | --- |
-| Keyboard, single keys | `hatari-event keypress/keydown/keyup <key>`; ASCII alphanumeric char or ST scancode 0–255 | Non-alphanumerics need scancodes; no Unicode; no layout translation in the event path | P1: scancode table + key-name mapping. |
-| Keyboard, text | Repeated single-char events via `keypress` | No per-key delay; no string event (the `hatari-event text` path exists only in `hconsole`, which expands it client-side) | P1: `input_type_text` with optional delay. |
+| Keyboard, single keys | `input_key` accepts named keys, one printable ASCII character (including shifted punctuation) or an ST scancode 0–255 | No Unicode or layout translation in the event path | P1 scancode/key-name mapping is implemented. |
+| Keyboard, text | `input_text(text, delay_ms=10)` expands a string into keypress/down/up events with a per-key delay | No Unicode or layout translation | P1 `input_text` is implemented. |
 | Mouse buttons | `leftdown/leftup/rightdown/rightup/doubleclick` | No middle button (ST mice lack one) | P1. |
 | Mouse motion | `mousemove <dx> <dy>` relative | No absolute positioning; corner-pin trick is fragile | P1 basic, P2 absolute helper. |
 | Mouse wheel | None | ST hardware has no wheel | Not applicable. |
@@ -127,7 +174,7 @@ indirectly; analog and real-time device input need patches.
 | Capability | Today | Gap | Plan |
 | --- | --- | --- | --- |
 | Screenshot | Debugger `screenshot <path>`; shortcut uses configured dir | No frame selection; parse/serialize is text-only | P1 single frame; P2 frame-targeted. |
-| Raw framebuffer | Not exposed | PNG decode is the only path | P2 server-side decode; P7 binary readback `[P]`. |
+| Raw framebuffer | Server decodes 24/32-bit BMP frames; PNG capture is file-only | No direct framebuffer readback and no PNG pixel decode | P2 server-side BMP decode is implemented; P7 binary readback `[P]`. |
 | Frame stepping | Not exposed | `--run-vbls` is per-process; VBL breakpoint is coarse | P2 `[P]`; P2 fallback with `_vbl` breakpoints. |
 | Screen metadata | `hatari-debug info` | Text parsing | P1. |
 | Video recording | AVI options + `recanim` | Runtime codec/file changes limited | P2/P5. |
@@ -270,6 +317,17 @@ Goal: W1 end to end, plus enough input/screenshot to be useful for W2.
 - [ ] P1.26 Destructive tool annotations and an optional allowlist mode.
 - [ ] P1.27 Hard limits: output size, dump size, command length, runtime.
 
+**AHCC toolchain**
+
+- [ ] P1.28 `ahcc_compile`: expose the verified `scripts/ahcc-cli.py` flow as a
+      tool (source, output, TOS, include/define/lib, timeout); copy the result
+      into the workspace and return structured diagnostics. Keep the script as
+      the standalone path and share one implementation.
+- [ ] P1.29 `ahcc_gui_start` / `ahcc_gui_status`: launch `AHCCST.PRG` in a
+      visible or virtual display, wait for the GEM desktop/IDE, and expose it
+      through the same screenshot/input tools. GUI automation is best-effort
+      and must never block the CLI path.
+
 Gate: the MVP acceptance criteria in §6.
 
 ### Phase 2 — Graphical test rig
@@ -302,6 +360,9 @@ Goal: W2. Deterministic capture and scripted interaction, not just "a PNG".
       timing dependence where possible; document what remains non-deterministic.
 - [ ] P2.14 Screen modes: color/mono, borders, overscan, ST/STE/TT/Falcon
       Videl modes; verify capture in each.
+- [ ] P2.15 AHCC GUI scenarios: build a project through the IDE using
+      keyboard/mouse (open project, compile, read dialogs, capture errors);
+      define stable screen anchors and document where GUI timing is fragile.
 
 Gate: a test can boot a program, send input, capture the same frame twice with
 identical hashes, and produce a baseline diff.
@@ -333,6 +394,12 @@ outside unless explicitly enabled.
       expectations.
 - [ ] P3.11 Source mapping `[R]`: map m68k-atari-mint ELF/DWARF line info to
       addresses; Hatari symbols alone have no lines.
+- [ ] P3.12 External corpus harness: discover Okami-Shell, FreeMiNT, and GodLib
+      trees; select buildable targets per project; record toolchain and ROM
+      prerequisites; skip cleanly when a tree or toolchain is absent.
+- [ ] P3.13 AHCC build matrix: compile representative C from each corpus with
+      the CLI path, run the resulting PRG, and capture console/screenshot/exit
+      status. Include at least one multi-file project and one GUI build.
 
 Gate: one tool call runs a freshly built PRG to completion and returns exit
 code, console output, and a screenshot; a failing run returns a crash bundle.
@@ -398,6 +465,10 @@ captured, and validated headlessly.
 
 Goal: W5. Make the server a dependable test runner.
 
+Implementation note: the scenario engine, strict tool allowlist, artifact
+bundles, corpus discovery, replay (approximate fidelity) and parallel case
+execution are implemented. Items below remain the original design record.
+
 - [ ] P6.1 Scenario format (JSON/YAML): start, input, waits, assertions on
       screen/memory/console/exit code, teardown.
 - [ ] P6.2 Scenario runner with per-step timeouts and clear failure locations.
@@ -417,6 +488,9 @@ Goal: W5. Make the server a dependable test runner.
       breakpoints/profile, or emulator instrumentation.
 - [ ] P6.12 Attach mode: drive a Hatari instance started by someone else.
 - [ ] P6.13 Session manager: list/wait/cleanup orphaned emulator processes.
+- [ ] P6.14 Corpus scenarios: smoke scenarios for Okami-Shell, selected
+      FreeMiNT components, and GodLib; each declares its external root,
+      required ROM/toolchain, deterministic inputs, and expected artifacts.
 
 Gate: a CI job can run a scenario matrix in parallel and publish artifacts and
 a pass/fail report without leaking processes or sockets.
@@ -424,6 +498,10 @@ a pass/fail report without leaking processes or sockets.
 ### Phase 7 — Protocol and upstream hardening
 
 Goal: remove the sentinel/parse hacks and make the integration first-class.
+
+Implementation note: framing/codec/banner primitives exist, but P7.1's
+handshake is not wired and P7.2–P7.5 are not implemented. `emu_capabilities`
+tells the truth about this.
 
 - [ ] P7.1 Framed control protocol `[P]`: request id, `OK`/`ERR`, end marker,
       protocol version handshake; poll it from the debugger loop so one
@@ -449,6 +527,9 @@ the same tool behavior, preferring the framed path when available.
 ### Phase 8 — Stretch and research
 
 Only pursue when a concrete user need appears. These are not commitments.
+
+Implementation note: the P8 lab harnesses are complete but non-shipping. Most
+verdicts are INCONCLUSIVE or narrow GO; no P8 item is a committed feature.
 
 - [ ] P8.1 Time-travel debugging: periodic snapshots + replay to a step.
 - [ ] P8.2 Full source-level debugging: breakpoints by file:line, variables,
@@ -566,6 +647,9 @@ These run in parallel with every phase:
 
 ## 10. How this roadmap is maintained
 
+- The per-phase implementation plans are indexed in `../plans/README.md`.
+  Each plan links back to the item ids below and records work done, remaining
+  work, verification, and review findings.
 - Items move to `../plans/` when work starts; the plan links back to the item
   id and states the exit criteria.
 - Decisions that change the architecture get an ADR; this file does not carry
